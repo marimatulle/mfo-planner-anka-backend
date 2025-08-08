@@ -1,0 +1,87 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Usuário do sistema (advisor ou viewer)
+model User {
+  id        Int       @id @default(autoincrement())
+  name      String
+  email     String    @unique
+  password  String    // hash da senha
+  role      UserRole  @default(VIEWER)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Relação: um advisor pode ter vários clientes
+  clients   Client[]  @relation("AdvisorClients")
+}
+
+enum UserRole {
+  ADVISOR
+  VIEWER
+}
+
+/// Cliente atendido pelo advisor
+model Client {
+  id            Int       @id @default(autoincrement())
+  name          String
+  email         String    @unique
+  age           Int
+  isActive      Boolean   @default(true)
+  familyProfile String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Advisor responsável
+  advisorId Int
+  advisor   User      @relation("AdvisorClients", fields: [advisorId], references: [id])
+
+  goals       Goal[]
+  wallets     Wallet[]
+  events      Event[]
+  simulations Simulation[]
+}
+
+/// Metas financeiras
+model Goal {
+  id          Int      @id @default(autoincrement())
+  type        String
+  targetValue Float
+  targetDate  DateTime
+  clientId    Int
+  client      Client   @relation(fields: [clientId], references: [id])
+}
+
+/// Carteira atual
+model Wallet {
+  id         Int     @id @default(autoincrement())
+  assetClass String
+  percentage Float
+  totalValue Float
+  clientId   Int
+  client     Client @relation(fields: [clientId], references: [id])
+}
+
+/// Movimentações financeiras
+model Event {
+  id        Int      @id @default(autoincrement())
+  type      String
+  value     Float
+  frequency String   // única | mensal | anual
+  clientId  Int
+  client    Client   @relation(fields: [clientId], references: [id])
+}
+
+/// Histórico de simulações
+model Simulation {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  data      Json
+  clientId  Int
+  client    Client   @relation(fields: [clientId], references: [id])
+}
