@@ -7,18 +7,16 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-/// Usuário do sistema (advisor ou viewer)
 model User {
-  id        Int       @id @default(autoincrement())
+  id        Int      @id @default(autoincrement())
   name      String
-  email     String    @unique
-  password  String    // hash da senha
-  role      UserRole  @default(VIEWER)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  email     String   @unique
+  password  String
+  role      UserRole @default(VIEWER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  // Relação: um advisor pode ter vários clientes
-  clients   Client[]  @relation("AdvisorClients")
+  clients Client[] @relation("AdvisorClients")
 }
 
 enum UserRole {
@@ -26,28 +24,27 @@ enum UserRole {
   VIEWER
 }
 
-/// Cliente atendido pelo advisor
 model Client {
-  id            Int       @id @default(autoincrement())
+  id            Int      @id @default(autoincrement())
   name          String
-  email         String    @unique
+  email         String   @unique
   age           Int
-  isActive      Boolean   @default(true)
+  isActive      Boolean  @default(true)
   familyProfile String
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  // Advisor responsável
   advisorId Int
-  advisor   User      @relation("AdvisorClients", fields: [advisorId], references: [id])
+  advisor   User @relation("AdvisorClients", fields: [advisorId], references: [id])
 
   goals       Goal[]
   wallets     Wallet[]
   events      Event[]
   simulations Simulation[]
+
+  Insurance Insurance[]
 }
 
-/// Metas financeiras
 model Goal {
   id          Int      @id @default(autoincrement())
   type        String
@@ -57,9 +54,8 @@ model Goal {
   client      Client   @relation(fields: [clientId], references: [id])
 }
 
-/// Carteira atual
 model Wallet {
-  id         Int     @id @default(autoincrement())
+  id         Int    @id @default(autoincrement())
   assetClass String
   percentage Float
   totalValue Float
@@ -67,21 +63,40 @@ model Wallet {
   client     Client @relation(fields: [clientId], references: [id])
 }
 
-/// Movimentações financeiras
-model Event {
-  id        Int      @id @default(autoincrement())
-  type      String
-  value     Float
-  frequency String   // única | mensal | anual
-  clientId  Int
-  client    Client   @relation(fields: [clientId], references: [id])
+enum Frequency {
+  ONCE
+  MONTHLY
+  ANNUAL
 }
 
-/// Histórico de simulações
+model Event {
+  id        Int       @id @default(autoincrement())
+  type      String
+  value     Float
+  frequency Frequency @default(ONCE)
+  date      DateTime? 
+  clientId  Int
+  client    Client    @relation(fields: [clientId], references: [id])
+}
+
 model Simulation {
   id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now())
   data      Json
   clientId  Int
   client    Client   @relation(fields: [clientId], references: [id])
+}
+
+enum InsuranceType {
+  LIFE
+  DISABILITY
+}
+
+model Insurance {
+  id            Int           @id @default(autoincrement())
+  type          InsuranceType
+  coverageValue Float
+  clientId      Int
+  client        Client        @relation(fields: [clientId], references: [id])
+  createdAt     DateTime      @default(now())
 }
