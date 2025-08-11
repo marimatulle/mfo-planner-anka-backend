@@ -1,5 +1,6 @@
 import { FastifyInstance } from "fastify";
 import { clientSchema } from "../schemas/clientSchemas";
+import { calculateAlignment } from "../services/alignmentService";
 import * as clientService from "../services/clientService";
 
 interface JwtUser {
@@ -40,19 +41,30 @@ export async function clientRoutes(app: FastifyInstance) {
     async (request, reply) => {
       const user = request.user as JwtUser;
 
-      const clients = await clientService.getClients(user.id);
-
-      if (!clients || clients.length === 0) {
-        return reply.code(404).send({ message: "Nenhum cliente encontrado" });
-      }
-
       if (user.role !== "ADVISOR") {
         return reply
           .code(403)
           .send({ message: "Apenas ADVISOR pode listar seus clientes" });
       }
 
-      return reply.send(clients);
+      const clients = await clientService.getClients(user.id);
+
+      if (!clients || clients.length === 0) {
+        return reply.code(404).send({ message: "Nenhum cliente encontrado" });
+      }
+
+      const enrichedClients = await Promise.all(
+        clients.map(async (client) => {
+          const alignment = await calculateAlignment(client.id);
+          return {
+            ...client,
+            alignment: alignment?.alignment ?? null,
+            category: alignment?.category ?? null,
+          };
+        })
+      );
+
+      return reply.send(enrichedClients);
     }
   );
 
@@ -75,7 +87,13 @@ export async function clientRoutes(app: FastifyInstance) {
           .send({ message: "Você não tem permissão para ver este cliente" });
       }
 
-      return reply.send(client);
+      const alignment = await calculateAlignment(client.id);
+
+      return reply.send({
+        ...client,
+        alignment: alignment?.alignment ?? null,
+        category: alignment?.category ?? null,
+      });
     }
   );
 
@@ -121,7 +139,7 @@ export async function clientRoutes(app: FastifyInstance) {
       const user = request.user as JwtUser;
 
       const client = await clientService.getClientById(Number(id));
-      
+
       if (!client) {
         return reply.code(404).send({ message: "Cliente não encontrado" });
       }
