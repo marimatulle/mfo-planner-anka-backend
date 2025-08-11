@@ -11,10 +11,6 @@ export async function createClient(data: ClientInput, advisorId: number) {
   });
 }
 
-export async function getAllClients() {
-  return prisma.client.findMany();
-}
-
 export async function getClients(advisorId: number) {
   return prisma.client.findMany({
     where: { advisorId },

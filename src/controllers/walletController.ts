@@ -1,72 +1,72 @@
 import { FastifyInstance } from "fastify";
-import { goalSchema } from "../schemas/goalSchemas";
-import * as goalService from "../services/goalService";
+import { walletSchema } from "../schemas/walletSchemas";
+import * as walletService from "../services/walletService";
 
-export async function goalRoutes(app: FastifyInstance) {
+export async function walletRoutes(app: FastifyInstance) {
   app.post(
-    "/clients/:id/goals",
+    "/clients/:id/wallets",
     { preHandler: [app.authenticate] },
     async (request, reply) => {
       const { id } = request.params as { id: string };
       const clientId = Number(id);
 
-      const result = goalSchema.safeParse(request.body);
-
+      const result = walletSchema.safeParse(request.body);
+      
       if (!result.success) {
         return reply.code(400).send({
-          message: "Dados da meta inválidos",
+          message: "Dados inválidos",
           errors: result.error.flatten().fieldErrors,
         });
       }
 
-      const goal = await goalService.createGoal(clientId, result.data);
-      return reply.code(201).send(goal);
+      const wallet = await walletService.createWallet(clientId, result.data);
+      return reply.code(201).send({ wallet });
     }
   );
 
   app.get(
-    "/clients/:id/goals",
+    "/clients/:id/wallets",
     { preHandler: [app.authenticate] },
     async (request, reply) => {
       const { id } = request.params as { id: string };
       const clientId = Number(id);
 
-      const goals = await goalService.getGoals(clientId);
+      const wallets = await walletService.getWallets(clientId);
 
-      if (!goals || goals.length === 0) {
-        return reply.code(404).send({ message: "Nenhuma meta encontrada" });
+      if (!wallets || wallets.length === 0) {
+        return reply.code(404).send({ message: "Nenhuma carteira encontrada" });
       }
 
-      return reply.send(goals);
+      return reply.send(wallets);
     }
   );
 
   app.get(
-    "/goals/:id",
+    "/wallets/:id",
     { preHandler: [app.authenticate] },
     async (request, reply) => {
       const { id } = request.params as { id: string };
-      const goalId = Number(id);
+      const walletId = Number(id);
 
-      const goal = await goalService.getGoalById(goalId);
+      const wallet = await walletService.getWalletById(walletId);
 
-      if (!goal) {
-        return reply.code(404).send({ message: "Meta não encontrada" });
+      if (!wallet) {
+        return reply.code(404).send({ message: "Carteira não encontrada" });
       }
 
-      return reply.send(goal);
+      return reply.send(wallet);
     }
   );
 
   app.put(
-    "/goals/:id",
+    "/wallets/:id",
     { preHandler: [app.authenticate] },
     async (request, reply) => {
       const { id } = request.params as { id: string };
-      const goalId = Number(id);
+      const walletId = Number(id);
 
-      const result = goalSchema.partial().safeParse(request.body);
-
+      const result = walletSchema.partial().safeParse(request.body);
+      
       if (!result.success) {
         return reply.code(400).send({
           message: "Dados inválidos para atualização",
@@ -74,19 +74,19 @@ export async function goalRoutes(app: FastifyInstance) {
         });
       }
 
-      const updated = await goalService.updateGoal(goalId, result.data);
+      const updated = await walletService.updateWallet(walletId, result.data);
       return reply.send(updated);
     }
   );
 
   app.delete(
-    "/goals/:id",
+    "/wallets/:id",
     { preHandler: [app.authenticate] },
     async (request, reply) => {
       const { id } = request.params as { id: string };
-      const goalId = Number(id);
+      const walletId = Number(id);
 
-      await goalService.deleteGoal(goalId);
+      await walletService.deleteWallet(walletId);
       return reply.code(204).send();
     }
   );

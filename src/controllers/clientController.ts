@@ -8,12 +8,7 @@ interface JwtUser {
 }
 
 export async function clientRoutes(app: FastifyInstance) {
-  app.get("/clients", { preHandler: [app.authenticate] }, async (_, reply) => {
-    const clients = await clientService.getAllClients();
-    return reply.send(clients);
-  });
-
-  app.get(
+  app.post(
     "/clients",
     { preHandler: [app.authenticate] },
     async (request, reply) => {
@@ -22,11 +17,65 @@ export async function clientRoutes(app: FastifyInstance) {
       if (user.role !== "ADVISOR") {
         return reply
           .code(403)
+          .send({ message: "Apenas ADVISOR pode criar clientes" });
+      }
+
+      const result = clientSchema.safeParse(request.body);
+
+      if (!result.success) {
+        return reply.code(400).send({
+          message: "Dados inválidos",
+          errors: result.error.flatten().fieldErrors,
+        });
+      }
+
+      const client = await clientService.createClient(result.data, user.id);
+      return reply.code(201).send(client);
+    }
+  );
+
+  app.get(
+    "/clients",
+    { preHandler: [app.authenticate] },
+    async (request, reply) => {
+      const user = request.user as JwtUser;
+
+      const clients = await clientService.getClients(user.id);
+
+      if (!clients || clients.length === 0) {
+        return reply.code(404).send({ message: "Nenhum cliente encontrado" });
+      }
+
+      if (user.role !== "ADVISOR") {
+        return reply
+          .code(403)
           .send({ message: "Apenas ADVISOR pode listar seus clientes" });
       }
 
-      const clients = await clientService.getClients(user.id);
       return reply.send(clients);
+    }
+  );
+
+  app.get(
+    "/clients/:id",
+    { preHandler: [app.authenticate] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const user = request.user as JwtUser;
+
+      const client = await clientService.getClientById(Number(id));
+
+      if (!client) {
+        return reply.code(404).send({ message: "Cliente não encontrado" });
+      }
+
+      if (user.role === "ADVISOR" && client.advisorId !== user.id) {
+        return reply
+          .code(403)
+          .send({ message: "Você não tem permissão para ver este cliente" });
+      }
+
+      return reply.send(client);
     }
   );
 
@@ -48,6 +97,7 @@ export async function clientRoutes(app: FastifyInstance) {
       const data = result.data;
 
       const client = await clientService.getClientById(Number(id));
+
       if (!client) {
         return reply.code(404).send({ message: "Cliente não encontrado" });
       }
@@ -71,6 +121,7 @@ export async function clientRoutes(app: FastifyInstance) {
       const user = request.user as JwtUser;
 
       const client = await clientService.getClientById(Number(id));
+      
       if (!client) {
         return reply.code(404).send({ message: "Cliente não encontrado" });
       }
