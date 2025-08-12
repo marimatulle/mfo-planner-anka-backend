@@ -74,7 +74,7 @@ model Event {
   type      String
   value     Float
   frequency Frequency @default(ONCE)
-  date      DateTime? 
+  startDate      DateTime? 
   clientId  Int
   client    Client    @relation(fields: [clientId], references: [id])
 }
