@@ -5,6 +5,7 @@ import { goalRoutes } from "../controllers/goalController";
 import { walletRoutes } from "../controllers/walletController";
 import { eventRoutes } from "../controllers/eventController";
 import { simulationRoutes } from "../controllers/simulationController";
+import { simulationHistoryRoutes } from "../controllers/simulationHistoryController";
 
 export async function registerRoutes(app: FastifyInstance) {
   await authRoutes(app);
@@ -13,4 +14,5 @@ export async function registerRoutes(app: FastifyInstance) {
   await walletRoutes(app);
   await eventRoutes(app);
   await simulationRoutes(app);
+  await simulationHistoryRoutes(app);
 }
