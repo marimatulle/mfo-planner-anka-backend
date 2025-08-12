@@ -8,6 +8,7 @@ import { simulationRoutes } from "../controllers/simulationController";
 import { simulationHistoryRoutes } from "../controllers/simulationHistoryController";
 import { insuranceRoutes } from "../controllers/insuranceController";
 import { suggestionRoutes } from "../controllers/suggestionController";
+import { csvImportRoutes } from "../controllers/csvImportController";
 
 export async function registerRoutes(app: FastifyInstance) {
   await authRoutes(app);
@@ -19,4 +20,5 @@ export async function registerRoutes(app: FastifyInstance) {
   await simulationHistoryRoutes(app);
   await insuranceRoutes(app);
   await suggestionRoutes(app);
+  await csvImportRoutes(app);
 }
