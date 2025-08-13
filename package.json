@@ -5,7 +5,9 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
-    "test": "jest --coverage",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
     "lint": "eslint 'src/**/*.{ts,tsx}' --fix",
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts"
   },
@@ -22,6 +24,7 @@
     "@types/supertest": "^6.0.3",
     "@typescript-eslint/eslint-plugin": "^8.39.0",
     "@typescript-eslint/parser": "^8.39.0",
+    "cross-env": "^10.0.0",
     "eslint": "^9.33.0",
     "globals": "^16.3.0",
     "jest": "^30.0.5",
