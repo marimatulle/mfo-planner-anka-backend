@@ -8,6 +8,6 @@
     "rootDir": "src",
     "types": ["jest", "node"]
   },
-  "include": ["src/**/*.ts", "src/**/*.d.ts", "test/**/*.ts"],
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "tests/**/*.ts"],
   "exclude": ["dist"]
 }
