@@ -31,7 +31,11 @@ const sendProgress = (importId: string, percent: number, message: string) => {
   client.write(payload);
 };
 
-export async function processCsvImport(fileStream: Readable, importId: string) {
+export async function processCsvImport(
+  fileStream: Readable,
+  importId: string,
+  advisorId: number
+) {
   const parser = fileStream.pipe(
     parse({ columns: true, skip_empty_lines: true })
   );
@@ -53,7 +57,7 @@ export async function processCsvImport(fileStream: Readable, importId: string) {
         email: rawRow.email,
         age: Number(rawRow.age),
         isActive: rawRow.isActive?.toLowerCase() === "true",
-        familyProfile: rawRow.familyProfile || undefined,
+        familyProfile: rawRow.familyProfile?.trim() || "",
       };
 
       const result = clientSchema.safeParse(transformed);
@@ -67,7 +71,12 @@ export async function processCsvImport(fileStream: Readable, importId: string) {
         return;
       }
 
-      await prisma.client.create({ data: result.data });
+      await prisma.client.create({
+        data: {
+          ...result.data,
+          advisor: { connect: { id: advisorId } },
+        },
+      });
 
       const percent = Math.round((processed / total) * 100);
       sendProgress(
@@ -79,6 +88,5 @@ export async function processCsvImport(fileStream: Readable, importId: string) {
   );
 
   sendProgress(importId, 100, "Importação concluída.");
-
   sseClients.delete(importId);
 }

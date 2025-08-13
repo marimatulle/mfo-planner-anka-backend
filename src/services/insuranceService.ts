@@ -1,7 +1,6 @@
 import prisma from "../prismaClient";
+import { Insurance } from "@prisma/client";
 import { InsuranceInput } from "../schemas/insuranceSchemas";
-
-type Insurance = Awaited<ReturnType<typeof prisma.insurance.findFirst>>;
 
 export async function createInsurance(clientId: number, data: InsuranceInput) {
   return prisma.insurance.create({
@@ -17,13 +16,13 @@ export async function getInsuranceDistribution(clientId: number) {
   const insurances = await prisma.insurance.findMany({ where: { clientId } });
 
   const total = insurances.reduce(
-    (sum: number, i: Insurance) => sum + (i?.coverageValue ?? 0),
+    (sum: number, i: Insurance) => sum + (i.coverageValue ?? 0),
     0
   );
 
   const life = insurances
-    .filter((i: Insurance) => i?.type === "LIFE")
-    .reduce((sum: number, i: Insurance) => sum + (i?.coverageValue ?? 0), 0);
+    .filter((i: Insurance) => i.type === "LIFE")
+    .reduce((sum: number, i: Insurance) => sum + (i.coverageValue ?? 0), 0);
 
   const disability = total - life;
 

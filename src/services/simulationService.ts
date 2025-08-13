@@ -1,8 +1,8 @@
-import { Event as PrismaEvent } from "@prisma/client";
+import { Event } from "@prisma/client";
 
 export function simulateWealthCurve(
   initialValue: number,
-  events: PrismaEvent[],
+  events: Event[],
   rate: number = 0.04
 ): { year: number; projectedValue: number }[] {
   const monthlyRate = Math.pow(1 + rate, 1 / 12) - 1;

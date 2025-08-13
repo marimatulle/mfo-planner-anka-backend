@@ -5,7 +5,7 @@ export const clientSchema = z.object({
   email: z.string().email(),
   age: z.number().int().positive(),
   isActive: z.boolean().default(true),
-  familyProfile: z.string().optional(),
+  familyProfile: z.string().default(""), 
 });
 
 export type ClientInput = z.infer<typeof clientSchema>;

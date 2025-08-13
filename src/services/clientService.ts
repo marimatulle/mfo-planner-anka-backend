@@ -6,7 +6,6 @@ export async function createClient(data: ClientInput, advisorId: number) {
     data: {
       ...data,
       advisorId,
-      familyProfile: data.familyProfile ?? "",
     },
   });
 }

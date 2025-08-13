@@ -1,4 +1,5 @@
 import prisma from "../prismaClient";
+import type { Goal } from "@prisma/client";
 
 export async function calculateAlignment(clientId: number) {
   const wallet = await prisma.wallet.findFirst({ where: { clientId } });
@@ -6,7 +7,11 @@ export async function calculateAlignment(clientId: number) {
 
   if (!wallet || goals.length === 0) return null;
 
-  const totalTarget = goals.reduce((sum, goal) => sum + goal.targetValue, 0);
+  const totalTarget = goals.reduce(
+    (sum: number, goal: Goal) => sum + goal.targetValue,
+    0
+  );
+
   const alignment = totalTarget / wallet.totalValue;
 
   let category: string;
