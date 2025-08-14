@@ -15,8 +15,7 @@ import { buildApp } from "./app";
     });
   console.log(chalk.cyan("\n========================\n"));
 
-  app.listen({ port: 3001, host: "0.0.0.0" }).then(() => {
-    console.log(chalk.yellow("Servidor rodando em http://localhost:3001"));
-    console.log(chalk.yellow("Docs em http://localhost:3001/docs"));
-  });
+  await app.listen({ port: 3001, host: "0.0.0.0" });
+  console.log(chalk.yellow("Servidor rodando em http://localhost:3001"));
+  console.log(chalk.yellow("Docs em http://localhost:3001/docs"));
 })();

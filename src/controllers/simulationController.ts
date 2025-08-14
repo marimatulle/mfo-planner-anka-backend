@@ -6,9 +6,51 @@ import { z } from "zod";
 const prisma = new PrismaClient();
 
 export async function simulationRoutes(app: FastifyInstance) {
+  const queryJsonSchema = {
+    type: "object",
+    properties: {
+      rate: { type: "string" },
+    },
+  };
+
+  const paramsJsonSchema = {
+    type: "object",
+    required: ["id"],
+    properties: {
+      id: { type: "string" },
+    },
+  };
+
+  const responseJsonSchema = {
+    type: "object",
+    properties: {
+      curve: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            date: { type: "string", format: "date-time" },
+            value: { type: "number" },
+          },
+        },
+      },
+    },
+  };
+
   app.get(
     "/clients/:id/simulation",
-    { preHandler: [app.authenticate] },
+    {
+      preHandler: [app.authenticate],
+      schema: {
+        params: paramsJsonSchema,
+        querystring: queryJsonSchema,
+        response: {
+          200: responseJsonSchema,
+          404: { type: "object", properties: { message: { type: "string" } } },
+        },
+        tags: ["Simulation"],
+      },
+    },
     async (request, reply) => {
       const querySchema = z.object({
         rate: z.string().optional(),
@@ -25,7 +67,7 @@ export async function simulationRoutes(app: FastifyInstance) {
       const parsedRate = Number(rate) || 0.04;
 
       const wallet = await prisma.wallet.findFirst({ where: { clientId } });
-      
+
       if (!wallet) {
         return reply.code(404).send({ message: "Carteira não encontrada" });
       }

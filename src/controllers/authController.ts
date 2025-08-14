@@ -1,4 +1,4 @@
-import { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
+import { FastifyInstance } from "fastify";
 import { z } from "zod";
 import bcrypt from "bcrypt";
 import prisma from "../prismaClient";
@@ -23,12 +23,42 @@ interface JwtUser {
 }
 
 export async function authRoutes(app: FastifyInstance) {
-  app.post(
+  app.post<{ Body: RegisterBody }>(
     "/register",
-    async (
-      request: FastifyRequest<{ Body: RegisterBody }>,
-      reply: FastifyReply
-    ) => {
+    {
+      schema: {
+        body: {
+          type: "object",
+          required: ["name", "email", "password"],
+          properties: {
+            name: { type: "string", minLength: 1 },
+            email: { type: "string", format: "email" },
+            password: { type: "string", minLength: 6 },
+            role: {
+              type: "string",
+              enum: ["ADVISOR", "VIEWER"],
+              default: "VIEWER",
+            },
+          },
+        },
+        response: {
+          201: {
+            type: "object",
+            properties: {
+              id: { type: "string" },
+              email: { type: "string", format: "email" },
+              role: { type: "string", enum: ["ADVISOR", "VIEWER"] },
+            },
+          },
+          409: {
+            type: "object",
+            properties: { message: { type: "string" } },
+          },
+        },
+        tags: ["Auth"],
+      },
+    },
+    async (request, reply) => {
       const { name, email, password, role } = registerSchema.parse(
         request.body
       );
@@ -39,7 +69,6 @@ export async function authRoutes(app: FastifyInstance) {
       }
 
       const hashedPassword = await bcrypt.hash(password, 10);
-
       const user = await prisma.user.create({
         data: { name, email, password: hashedPassword, role },
       });
@@ -50,12 +79,32 @@ export async function authRoutes(app: FastifyInstance) {
     }
   );
 
-  app.post(
+  app.post<{ Body: LoginBody }>(
     "/login",
-    async (
-      request: FastifyRequest<{ Body: LoginBody }>,
-      reply: FastifyReply
-    ) => {
+    {
+      schema: {
+        body: {
+          type: "object",
+          required: ["email", "password"],
+          properties: {
+            email: { type: "string", format: "email" },
+            password: { type: "string", minLength: 6 },
+          },
+        },
+        response: {
+          200: {
+            type: "object",
+            properties: { token: { type: "string" } },
+          },
+          401: {
+            type: "object",
+            properties: { message: { type: "string" } },
+          },
+        },
+        tags: ["Auth"],
+      },
+    },
+    async (request, reply) => {
       const { email, password } = loginSchema.parse(request.body);
       const user = await prisma.user.findUnique({ where: { email } });
 
@@ -73,8 +122,31 @@ export async function authRoutes(app: FastifyInstance) {
 
   app.get(
     "/me",
-    { preHandler: [app.authenticate] },
-    async (request: FastifyRequest) => {
+    {
+      preHandler: [app.authenticate],
+      schema: {
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              user: {
+                type: "object",
+                properties: {
+                  id: { type: "string" },
+                  role: { type: "string", enum: ["ADVISOR", "VIEWER"] },
+                },
+              },
+            },
+          },
+          401: {
+            type: "object",
+            properties: { message: { type: "string" } },
+          },
+        },
+        tags: ["Auth"],
+      },
+    },
+    async (request) => {
       const user = request.user as JwtUser;
       return { user };
     }

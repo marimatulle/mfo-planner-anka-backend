@@ -18,9 +18,48 @@ interface JwtUser {
 type MultipartRequest = FastifyRequest & Multipart;
 
 export async function clientRoutes(app: FastifyInstance) {
+  const clientJsonSchema = {
+    type: "object",
+    required: ["name", "email", "phone"],
+    properties: {
+      name: { type: "string", minLength: 1 },
+      email: { type: "string", format: "email" },
+      phone: { type: "string" },
+      age: { type: "integer" },
+    },
+  };
+
+  const clientPartialSchema = {
+    type: "object",
+    properties: {
+      name: { type: "string", minLength: 1 },
+      email: { type: "string", format: "email" },
+      phone: { type: "string" },
+      age: { type: "integer" },
+    },
+  };
+
   app.post(
     "/clients",
-    { preHandler: [app.authenticate] },
+    {
+      preHandler: [app.authenticate],
+      schema: {
+        body: clientJsonSchema,
+        response: {
+          201: clientJsonSchema,
+          400: {
+            type: "object",
+            properties: {
+              message: { type: "string" },
+              errors: { type: "object" },
+            },
+          },
+          403: { type: "object", properties: { message: { type: "string" } } },
+          500: { type: "object", properties: { message: { type: "string" } } },
+        },
+        tags: ["Clients"],
+      },
+    },
     async (request, reply) => {
       const user = request.user as JwtUser;
       if (user.role !== "ADVISOR")
@@ -46,7 +85,24 @@ export async function clientRoutes(app: FastifyInstance) {
 
   app.post(
     "/clients/import",
-    { preHandler: [app.authenticate] },
+    {
+      preHandler: [app.authenticate],
+      schema: {
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              message: { type: "string" },
+              importId: { type: "string" },
+            },
+          },
+          400: { type: "object", properties: { message: { type: "string" } } },
+          403: { type: "object", properties: { message: { type: "string" } } },
+          500: { type: "object", properties: { message: { type: "string" } } },
+        },
+        tags: ["Clients"],
+      },
+    },
     async (request, reply) => {
       const user = request.user as JwtUser;
       if (user.role !== "ADVISOR")
@@ -72,21 +128,45 @@ export async function clientRoutes(app: FastifyInstance) {
     }
   );
 
-  app.get("/clients/import-status/:importId", async (request, reply) => {
-    const { importId } = request.params as { importId: string };
+  app.get(
+    "/clients/import-status/:importId",
+    {
+      schema: {
+        params: {
+          type: "object",
+          required: ["importId"],
+          properties: { importId: { type: "string" } },
+        },
+        tags: ["Clients"],
+      },
+    },
+    async (request, reply) => {
+      const { importId } = request.params as { importId: string };
 
-    reply.raw.setHeader("Content-Type", "text/event-stream");
-    reply.raw.setHeader("Cache-Control", "no-cache");
-    reply.raw.setHeader("Connection", "keep-alive");
+      reply.raw.setHeader("Content-Type", "text/event-stream");
+      reply.raw.setHeader("Cache-Control", "no-cache");
+      reply.raw.setHeader("Connection", "keep-alive");
 
-    registerSseClient(importId, reply.raw);
+      registerSseClient(importId, reply.raw);
 
-    request.raw.on("close", () => reply.raw.end());
-  });
+      request.raw.on("close", () => reply.raw.end());
+    }
+  );
 
   app.get(
     "/clients",
-    { preHandler: [app.authenticate] },
+    {
+      preHandler: [app.authenticate],
+      schema: {
+        response: {
+          200: { type: "array", items: clientJsonSchema },
+          403: { type: "object", properties: { message: { type: "string" } } },
+          404: { type: "object", properties: { message: { type: "string" } } },
+          500: { type: "object", properties: { message: { type: "string" } } },
+        },
+        tags: ["Clients"],
+      },
+    },
     async (request, reply) => {
       const user = request.user as JwtUser;
       if (user.role !== "ADVISOR")
@@ -119,7 +199,23 @@ export async function clientRoutes(app: FastifyInstance) {
 
   app.get(
     "/clients/:id",
-    { preHandler: [app.authenticate] },
+    {
+      preHandler: [app.authenticate],
+      schema: {
+        params: {
+          type: "object",
+          required: ["id"],
+          properties: { id: { type: "string" } },
+        },
+        response: {
+          200: clientJsonSchema,
+          403: { type: "object", properties: { message: { type: "string" } } },
+          404: { type: "object", properties: { message: { type: "string" } } },
+          500: { type: "object", properties: { message: { type: "string" } } },
+        },
+        tags: ["Clients"],
+      },
+    },
     async (request, reply) => {
       const { id } = request.params as { id: string };
       const user = request.user as JwtUser;
@@ -151,7 +247,31 @@ export async function clientRoutes(app: FastifyInstance) {
 
   app.put(
     "/clients/:id",
-    { preHandler: [app.authenticate] },
+    {
+      preHandler: [app.authenticate],
+      schema: {
+        params: {
+          type: "object",
+          required: ["id"],
+          properties: { id: { type: "string" } },
+        },
+        body: clientPartialSchema,
+        response: {
+          200: clientJsonSchema,
+          400: {
+            type: "object",
+            properties: {
+              message: { type: "string" },
+              errors: { type: "object" },
+            },
+          },
+          403: { type: "object", properties: { message: { type: "string" } } },
+          404: { type: "object", properties: { message: { type: "string" } } },
+          500: { type: "object", properties: { message: { type: "string" } } },
+        },
+        tags: ["Clients"],
+      },
+    },
     async (request, reply) => {
       const { id } = request.params as { id: string };
       const user = request.user as JwtUser;
@@ -189,7 +309,23 @@ export async function clientRoutes(app: FastifyInstance) {
 
   app.delete(
     "/clients/:id",
-    { preHandler: [app.authenticate] },
+    {
+      preHandler: [app.authenticate],
+      schema: {
+        params: {
+          type: "object",
+          required: ["id"],
+          properties: { id: { type: "string" } },
+        },
+        response: {
+          204: { type: "null" },
+          403: { type: "object", properties: { message: { type: "string" } } },
+          404: { type: "object", properties: { message: { type: "string" } } },
+          500: { type: "object", properties: { message: { type: "string" } } },
+        },
+        tags: ["Clients"],
+      },
+    },
     async (request, reply) => {
       const { id } = request.params as { id: string };
       const user = request.user as JwtUser;

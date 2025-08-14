@@ -1,14 +1,13 @@
+import { FastifyInstance } from "fastify";
 import swagger from "@fastify/swagger";
 import swaggerUI from "@fastify/swagger-ui";
-import { FastifyInstance } from "fastify";
 
 export async function swaggerPlugin(app: FastifyInstance) {
   await app.register(swagger, {
     swagger: {
-      info: {
-        title: "API MFO Planner",
-        version: "1.0.0",
-      },
+      info: { title: "API MFO Planner", version: "1.0.0" },
+      consumes: ["application/json"],
+      produces: ["application/json"],
     },
   });
 
@@ -18,5 +17,6 @@ export async function swaggerPlugin(app: FastifyInstance) {
       docExpansion: "full",
       deepLinking: false,
     },
+    initOAuth: {},
   });
 }

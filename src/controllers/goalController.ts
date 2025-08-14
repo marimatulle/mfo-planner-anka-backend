@@ -3,15 +3,54 @@ import { goalSchema } from "../schemas/goalSchemas";
 import * as goalService from "../services/goalService";
 
 export async function goalRoutes(app: FastifyInstance) {
+  const goalJsonSchema = {
+    type: "object",
+    required: ["title", "targetDate", "description"],
+    properties: {
+      title: { type: "string", minLength: 1 },
+      targetDate: { type: "string", format: "date-time" },
+      description: { type: "string" },
+    },
+  };
+
+  const goalPartialSchema = {
+    type: "object",
+    properties: {
+      title: { type: "string", minLength: 1 },
+      targetDate: { type: "string", format: "date-time" },
+      description: { type: "string" },
+    },
+  };
+
   app.post(
     "/clients/:id/goals",
-    { preHandler: [app.authenticate] },
+    {
+      preHandler: [app.authenticate],
+      schema: {
+        params: {
+          type: "object",
+          required: ["id"],
+          properties: { id: { type: "string" } },
+        },
+        body: goalJsonSchema,
+        response: {
+          201: goalJsonSchema,
+          400: {
+            type: "object",
+            properties: {
+              message: { type: "string" },
+              errors: { type: "object" },
+            },
+          },
+        },
+        tags: ["Goals"],
+      },
+    },
     async (request, reply) => {
       const { id } = request.params as { id: string };
       const clientId = Number(id);
 
       const result = goalSchema.safeParse(request.body);
-
       if (!result.success) {
         return reply.code(400).send({
           message: "Dados da meta inválidos",
@@ -26,13 +65,26 @@ export async function goalRoutes(app: FastifyInstance) {
 
   app.get(
     "/clients/:id/goals",
-    { preHandler: [app.authenticate] },
+    {
+      preHandler: [app.authenticate],
+      schema: {
+        params: {
+          type: "object",
+          required: ["id"],
+          properties: { id: { type: "string" } },
+        },
+        response: {
+          200: { type: "array", items: goalJsonSchema },
+          404: { type: "object", properties: { message: { type: "string" } } },
+        },
+        tags: ["Goals"],
+      },
+    },
     async (request, reply) => {
       const { id } = request.params as { id: string };
       const clientId = Number(id);
 
       const goals = await goalService.getGoals(clientId);
-
       if (!goals || goals.length === 0) {
         return reply.code(404).send({ message: "Nenhuma meta encontrada" });
       }
@@ -43,16 +95,28 @@ export async function goalRoutes(app: FastifyInstance) {
 
   app.get(
     "/goals/:id",
-    { preHandler: [app.authenticate] },
+    {
+      preHandler: [app.authenticate],
+      schema: {
+        params: {
+          type: "object",
+          required: ["id"],
+          properties: { id: { type: "string" } },
+        },
+        response: {
+          200: goalJsonSchema,
+          404: { type: "object", properties: { message: { type: "string" } } },
+        },
+        tags: ["Goals"],
+      },
+    },
     async (request, reply) => {
       const { id } = request.params as { id: string };
       const goalId = Number(id);
 
       const goal = await goalService.getGoalById(goalId);
-
-      if (!goal) {
+      if (!goal)
         return reply.code(404).send({ message: "Meta não encontrada" });
-      }
 
       return reply.send(goal);
     }
@@ -60,13 +124,33 @@ export async function goalRoutes(app: FastifyInstance) {
 
   app.put(
     "/goals/:id",
-    { preHandler: [app.authenticate] },
+    {
+      preHandler: [app.authenticate],
+      schema: {
+        params: {
+          type: "object",
+          required: ["id"],
+          properties: { id: { type: "string" } },
+        },
+        body: goalPartialSchema,
+        response: {
+          200: goalJsonSchema,
+          400: {
+            type: "object",
+            properties: {
+              message: { type: "string" },
+              errors: { type: "object" },
+            },
+          },
+        },
+        tags: ["Goals"],
+      },
+    },
     async (request, reply) => {
       const { id } = request.params as { id: string };
       const goalId = Number(id);
 
       const result = goalSchema.partial().safeParse(request.body);
-
       if (!result.success) {
         return reply.code(400).send({
           message: "Dados inválidos para atualização",
@@ -81,7 +165,21 @@ export async function goalRoutes(app: FastifyInstance) {
 
   app.delete(
     "/goals/:id",
-    { preHandler: [app.authenticate] },
+    {
+      preHandler: [app.authenticate],
+      schema: {
+        params: {
+          type: "object",
+          required: ["id"],
+          properties: { id: { type: "string" } },
+        },
+        response: {
+          204: { type: "null" },
+          404: { type: "object", properties: { message: { type: "string" } } },
+        },
+        tags: ["Goals"],
+      },
+    },
     async (request, reply) => {
       const { id } = request.params as { id: string };
       const goalId = Number(id);
