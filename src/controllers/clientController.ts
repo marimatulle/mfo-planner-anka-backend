@@ -122,12 +122,18 @@ export async function clientRoutes(app: FastifyInstance) {
       const { id } = request.params as { id: string };
       const user = request.user as JwtUser;
 
+      if (user.role !== "ADVISOR") {
+        return reply
+          .code(403)
+          .send({ message: "Você não tem permissão para ver este cliente" });
+      }
+
       const client = await clientService.getClientById(Number(id));
       if (!client) {
         return reply.code(404).send({ message: "Cliente não encontrado" });
       }
 
-      if (user.role === "ADVISOR" && client.advisorId !== user.id) {
+      if (client.advisorId !== user.id) {
         return reply
           .code(403)
           .send({ message: "Você não tem permissão para ver este cliente" });
@@ -148,6 +154,12 @@ export async function clientRoutes(app: FastifyInstance) {
     async (request, reply) => {
       const { id } = request.params as { id: string };
       const user = request.user as JwtUser;
+
+      if (user.role !== "ADVISOR") {
+        return reply
+          .code(403)
+          .send({ message: "Você não tem permissão para editar este cliente" });
+      }
 
       const result = clientSchema.partial().safeParse(request.body);
       if (!result.success) {
@@ -182,6 +194,12 @@ export async function clientRoutes(app: FastifyInstance) {
     async (request, reply) => {
       const { id } = request.params as { id: string };
       const user = request.user as JwtUser;
+
+      if (user.role !== "ADVISOR") {
+        return reply.code(403).send({
+          message: "Você não tem permissão para excluir este cliente",
+        });
+      }
 
       const client = await clientService.getClientById(Number(id));
       if (!client) {
