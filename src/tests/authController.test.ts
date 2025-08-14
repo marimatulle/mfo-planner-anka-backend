@@ -1,4 +1,3 @@
-// src/tests/authController.test.ts
 import request from "supertest";
 import { FastifyInstance } from "fastify";
 import { buildApp } from "../app";
