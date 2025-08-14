@@ -15,17 +15,17 @@
 ## Configuração do projeto
 
 1. Clone o repositório e instale as dependências:
-```bash
-git clone
-npm install
-```
+   ```bash
+   git clone
+   npm install
+   ```
 
 2. Crie um arquivo .env na raiz do projeto com as seguintes configurações:
-```bash
-DATABASE_URL="your_database"
-JWT_SECRET="your_jwt_key"
-JWT_EXPIRATION="1h"
-```
+   ```bash
+   DATABASE_URL="your_database"
+   JWT_SECRET="your_jwt_key"
+   JWT_EXPIRATION="1h"
+   ```
 
 3. É necessário ter um banco de dados PostgreSQL rodando no Docker.
    
